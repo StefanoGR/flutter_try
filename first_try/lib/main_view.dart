@@ -1,12 +1,10 @@
+import 'package:first_try/data/network/api.dart';
+import 'package:first_try/data/network/model/random_user.dart';
+import 'package:first_try/view/user_item.dart';
 import 'package:flutter/material.dart';
 
 class MainView extends StatefulWidget {
   MainView({Key key, this.title}) : super(key: key);
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -14,44 +12,49 @@ class MainView extends StatefulWidget {
 }
 
 class _MainViewState extends State<MainView> {
-  int _counter = 0;
+  List<RandomUser> _users = new List();
 
-  void _incrementCounter() {
+  void _getUsers() {
     setState(() {
-      _counter++;
+      _users = null;
+    });
+    Api.getUsers().then((onValue) {
+      setState(() {
+        _users = onValue;
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme
-                  .of(context)
-                  .textTheme
-                  .display1,
-            ),
-          ],
-        ),
-      ),
+      body: _users != null ? buildListView() : buildProgress(),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
+        onPressed: _getUsers,
+        tooltip: 'Get Users',
         child: Icon(Icons.add),
       ),
     );
+  }
+
+  Widget buildListView() {
+    if (_users.isEmpty)
+      return Center(child: Text("Premi '+' per caricare gli utenti"));
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(8.0),
+      children: _users.map((user) => UserListItem(user)).toList(),
+    );
+  }
+
+  Widget buildProgress() {
+    return new Container(
+        child: new Center(
+      child: new CircularProgressIndicator(),
+    ));
   }
 }
